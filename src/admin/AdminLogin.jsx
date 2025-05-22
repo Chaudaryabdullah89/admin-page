@@ -26,11 +26,42 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
-      const response = await authAPI.login(formData);
+      console.log('Attempting admin login with:', { email: formData.email });
+      
+      const response = await authAPI.login(formData.email, formData.password);
+      console.log('Login response:', response.data);
+
+      if (!response.data || !response.data.token) {
+        throw new Error('Invalid response from server');
+      }
+
+      // Store the token
       localStorage.setItem('adminToken', response.data.token);
+      
+      // If user data is included, store it
+      if (response.data.user) {
+        localStorage.setItem('adminUser', JSON.stringify(response.data.user));
+      }
+
+      toast.success('Login successful!');
       navigate('/admin/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      console.error('Login error:', err);
+      
+      // Clear password field on error
+      setFormData(prev => ({
+        ...prev,
+        password: ''
+      }));
+
+      // Show appropriate error message
+      if (err.response?.status === 401) {
+        setError('Invalid email or password');
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
