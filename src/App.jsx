@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { AuthProvider, useAuth } from './Context/AuthContext';
+import { AuthProvider } from './Context/AuthContext';
 import './App.css';
 
 // Admin Components
@@ -17,7 +17,7 @@ import EditProduct from './admin/EditProduct';
 import AddBlog from './admin/AddBlog';
 import OrderDetails from './admin/OrderDetails';
 import Discounts from './admin/Discounts';
-import ShippingMethods from './admin/ShippingMethods';
+// import ShippingMethods from './admin/ShippingMethods';
 
 // Layout Component
 const AdminLayout = ({ children }) => {
@@ -45,20 +45,6 @@ const AdminLayout = ({ children }) => {
   );
 };
 
-const PrivateRoute = ({ children }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
-
-  return user ? children : <Navigate to="/admin/login" />;
-};
-
 function App() {
   return (
     <AuthProvider>
@@ -70,110 +56,90 @@ function App() {
             <Route
               path="/admin"
               element={
-                <PrivateRoute>
-                  <AdminLayout>
-                    <AdminDashboard />
-                  </AdminLayout>
-                </PrivateRoute>
+                <AdminLayout>
+                  <AdminDashboard />
+                </AdminLayout>
               }
             />
             
             <Route
               path="/admin/products"
               element={
-                <PrivateRoute>
-                  <AdminLayout>
-                    <AdminProducts />
-                  </AdminLayout>
-                </PrivateRoute>
+                <AdminLayout>
+                  <AdminProducts />
+                </AdminLayout>
               }
             />
             
             <Route
               path="/admin/products/add"
               element={
-                <PrivateRoute>
-                  <AdminLayout>
-                    <AddProduct />
-                  </AdminLayout>
-                </PrivateRoute>
+                <AdminLayout>
+                  <AddProduct />
+                </AdminLayout>
               }
             />
             
             <Route
               path="/admin/orders"
               element={
-                <PrivateRoute>
-                  <AdminLayout>
-                    <AdminOrders />
-                  </AdminLayout>
-                </PrivateRoute>
+                <AdminLayout>
+                  <AdminOrders />
+                </AdminLayout>
               }
             />
             
             <Route
               path="/admin/orders/:id"
               element={
-                <PrivateRoute>
-                  <AdminLayout>
-                    <OrderDetails />
-                  </AdminLayout>
-                </PrivateRoute>
+                <AdminLayout>
+                  <OrderDetails />
+                </AdminLayout>
               }
             />
             
             <Route
               path="/admin/customers"
               element={
-                <PrivateRoute>
-                  <AdminLayout>
-                    <AdminCustomers />
-                  </AdminLayout>
-                </PrivateRoute>
+                <AdminLayout>
+                  <AdminCustomers />
+                </AdminLayout>
               }
             />
             
             <Route
               path="/admin/blogs"
               element={
-                <PrivateRoute>
-                  <AdminLayout>
-                    <AdminBlogs />
-                  </AdminLayout>
-                </PrivateRoute>
+                <AdminLayout>
+                  <AdminBlogs />
+                </AdminLayout>
               }
             />
             
             <Route
               path="/admin/blogs/add"
               element={
-                <PrivateRoute>
-                  <AdminLayout>
-                    <AddBlog />
-                  </AdminLayout>
-                </PrivateRoute>
+                <AdminLayout>
+                  <AddBlog />
+                </AdminLayout>
               }
             />
             
             <Route
               path="/admin/discounts"
               element={
-                <PrivateRoute>
-                  <AdminLayout>
-                    <Discounts />
-                  </AdminLayout>
-                </PrivateRoute>
+                <AdminLayout>
+                  <Discounts />
+                </AdminLayout>
               }
             />
             
             <Route
               path="/admin/settings"
               element={
-                <PrivateRoute>
-                  <AdminLayout>
-                    <AdminSettings />
-                  </AdminLayout>
-                </PrivateRoute>
+                <AdminLayout>
+                  <AdminSettings />
+                </AdminLayout>
               }
             />
             
