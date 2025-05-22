@@ -19,28 +19,31 @@ const AdminDashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const [orders, products, customers] = await Promise.all([
-          ordersAPI.getAll(),
-          productsAPI.getAll(),
-          customersAPI.getAll()
-        ]);
+        console.log('Fetching dashboard data...');
 
-        // Get recent orders (last 5)
-        const recentOrders = orders.data.slice(0, 5);
+        // Fetch dashboard stats
+        const statsResponse = await dashboardAPI.getStats();
+        console.log('Dashboard stats:', statsResponse.data);
 
-        // Get low stock products (less than 10 items)
-        const lowStockProducts = products.data.filter(product => product.stock < 10);
+        // Fetch recent orders
+        const recentOrdersResponse = await dashboardAPI.getRecentOrders();
+        console.log('Recent orders:', recentOrdersResponse.data);
+
+        // Fetch low stock products
+        const lowStockResponse = await dashboardAPI.getLowStockProducts();
+        console.log('Low stock products:', lowStockResponse.data);
 
         setStats({
-          totalOrders: orders.data.length,
-          totalProducts: products.data.length,
-          totalCustomers: customers.data.length,
-          recentOrders,
-          lowStockProducts
+          totalOrders: statsResponse.data.totalOrders || 0,
+          totalProducts: statsResponse.data.totalProducts || 0,
+          totalCustomers: statsResponse.data.totalCustomers || 0,
+          recentOrders: recentOrdersResponse.data || [],
+          lowStockProducts: lowStockResponse.data || []
         });
       } catch (err) {
-        setError('Failed to fetch dashboard data');
         console.error('Dashboard data fetch error:', err);
+        setError(err.response?.data?.message || 'Failed to fetch dashboard data');
+        toast.error('Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
@@ -72,16 +75,37 @@ const AdminDashboard = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-gray-500 text-sm font-medium">Total Orders</h3>
-          <p className="text-3xl font-bold text-gray-900">{stats.totalOrders}</p>
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-indigo-100 text-indigo-600">
+              <FiShoppingBag className="h-6 w-6" />
+            </div>
+            <div className="ml-4">
+              <h3 className="text-gray-500 text-sm font-medium">Total Orders</h3>
+              <p className="text-3xl font-bold text-gray-900">{stats.totalOrders}</p>
+            </div>
+          </div>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-gray-500 text-sm font-medium">Total Products</h3>
-          <p className="text-3xl font-bold text-gray-900">{stats.totalProducts}</p>
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-green-100 text-green-600">
+              <FiDollarSign className="h-6 w-6" />
+            </div>
+            <div className="ml-4">
+              <h3 className="text-gray-500 text-sm font-medium">Total Products</h3>
+              <p className="text-3xl font-bold text-gray-900">{stats.totalProducts}</p>
+            </div>
+          </div>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-gray-500 text-sm font-medium">Total Customers</h3>
-          <p className="text-3xl font-bold text-gray-900">{stats.totalCustomers}</p>
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-blue-100 text-blue-600">
+              <FiUsers className="h-6 w-6" />
+            </div>
+            <div className="ml-4">
+              <h3 className="text-gray-500 text-sm font-medium">Total Customers</h3>
+              <p className="text-3xl font-bold text-gray-900">{stats.totalCustomers}</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -89,36 +113,40 @@ const AdminDashboard = () => {
       <div className="bg-white rounded-lg shadow mb-8">
         <div className="p-6">
           <h2 className="text-lg font-semibold mb-4">Recent Orders</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {stats.recentOrders.map((order) => (
-                  <tr key={order._id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order._id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.user?.name || 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.totalAmount}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </td>
+          {stats.recentOrders.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {stats.recentOrders.map((order) => (
+                    <tr key={order._id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order._id}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.user?.name || 'N/A'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.totalAmount}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {order.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">No recent orders found</p>
+          )}
         </div>
       </div>
 
@@ -126,26 +154,30 @@ const AdminDashboard = () => {
       <div className="bg-white rounded-lg shadow">
         <div className="p-6">
           <h2 className="text-lg font-semibold mb-4">Low Stock Products</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {stats.lowStockProducts.map((product) => (
-                  <tr key={product._id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.stock}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${product.price}</td>
+          {stats.lowStockProducts.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {stats.lowStockProducts.map((product) => (
+                    <tr key={product._id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.stock}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${product.price}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">No low stock products found</p>
+          )}
         </div>
       </div>
     </div>
