@@ -1,67 +1,20 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-import { useAuth } from '../../Context/AuthContext';
-import { FiUpload } from 'react-icons/fi';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { blogsAPI } from '../utils/api';
+import { toast } from 'react-toastify';
+import { FiSave, FiX } from 'react-icons/fi';
 
 const AddBlog = () => {
-  const { id } = useParams();
   const navigate = useNavigate();
-  const { token } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    excerpt: '',
-    category: 'Technology',
+    image: '',
+    author: '',
     tags: '',
-    status: 'draft',
-    featuredImage: null
+    status: 'draft'
   });
-  const [previewImage, setPreviewImage] = useState(null);
-
-  useEffect(() => {
-    if (id) {
-      fetchBlog();
-    }
-  }, [id]);
-
-  const fetchBlog = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      console.log('Fetching blog with ID:', id);
-      
-      const response = await axios.get(`http://localhost:5000/api/blogs/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
-      console.log('Blog data received:', response.data);
-      const blog = response.data;
-      
-      setFormData({
-        title: blog.title,
-        content: blog.content,
-        excerpt: blog.excerpt,
-        category: blog.category,
-        tags: blog.tags.join(', '),
-        status: blog.status,
-        featuredImage: null
-      });
-      
-      if (blog.featuredImage) {
-        setPreviewImage(`https://apna-backend.vercel.app${blog.featuredImage}`);
-      }
-    } catch (err) {
-      console.error('Error fetching blog:', err);
-      setError(err.response?.data?.message || 'Failed to fetch blog');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -71,223 +24,131 @@ const AddBlog = () => {
     }));
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData(prev => ({
-        ...prev,
-        featuredImage: file
-      }));
-      setPreviewImage(URL.createObjectURL(file));
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-
     try {
-      const formDataToSend = new FormData();
-      Object.keys(formData).forEach(key => {
-        if (key === 'tags') {
-          formDataToSend.append(key, formData[key].split(',').map(tag => tag.trim()));
-        } else {
-          formDataToSend.append(key, formData[key]);
-        }
-      });
-
-      if (id) {
-        await axios.put(
-          `http://localhost:5000/api/blogs/${id}`,
-          formDataToSend,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data'
-            }
-          }
-        );
-      } else {
-        await axios.post(
-          'http://localhost:5000/api/blogs',
-          formDataToSend,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data'
-            }
-          }
-        );
-      }
-
+      setLoading(true);
+      const blogData = {
+        ...formData,
+        tags: formData.tags.split(',').map(tag => tag.trim())
+      };
+      await blogsAPI.create(blogData);
+      toast.success('Blog post created successfully');
       navigate('/admin/blogs');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save blog');
+    } catch (error) {
+      toast.error('Failed to create blog post');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
-        {id ? 'Edit Blog' : 'Add New Blog'}
-      </h1>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold">Add New Blog Post</h1>
+        <button
+          onClick={() => navigate('/admin/blogs')}
+          className="text-indigo-600 hover:text-indigo-900"
+        >
+          Back to Blogs
+        </button>
+      </div>
 
-      {error && (
-        <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
-          {error}
-        </div>
-      )}
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Title</label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                required
+              />
+            </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Title
-          </label>
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            required
-            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Content</label>
+              <textarea
+                name="content"
+                value={formData.content}
+                onChange={handleChange}
+                rows="10"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                required
+              />
+            </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Content
-          </label>
-          <textarea
-            name="content"
-            value={formData.content}
-            onChange={handleChange}
-            required
-            rows="10"
-            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Image URL</label>
+              <input
+                type="url"
+                name="image"
+                value={formData.image}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                required
+              />
+            </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Excerpt
-          </label>
-          <textarea
-            name="excerpt"
-            value={formData.excerpt}
-            onChange={handleChange}
-            required
-            rows="3"
-            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Author</label>
+              <input
+                type="text"
+                name="author"
+                value={formData.author}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                required
+              />
+            </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Category
-          </label>
-          <select
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            required
-            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="Technology">Technology</option>
-            <option value="Fashion">Fashion</option>
-            <option value="Lifestyle">Lifestyle</option>
-            <option value="News">News</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              >
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </select>
+            </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tags (comma-separated)
-          </label>
-          <input
-            type="text"
-            name="tags"
-            value={formData.tags}
-            onChange={handleChange}
-            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Status
-          </label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            required
-            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Featured Image
-          </label>
-          <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
-            <div className="space-y-1 text-center">
-              {previewImage ? (
-                <img
-                  src={previewImage}
-                  alt="Preview"
-                  className="mx-auto h-32 w-auto object-cover"
-                />
-              ) : (
-                <FiUpload className="mx-auto h-12 w-12 text-gray-400" />
-              )}
-              <div className="flex text-sm text-gray-600">
-                <label
-                  htmlFor="featured-image"
-                  className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
-                >
-                  <span>Upload a file</span>
-                  <input
-                    id="featured-image"
-                    name="featuredImage"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="sr-only"
-                  />
-                </label>
-                <p className="pl-1">or drag and drop</p>
-              </div>
-              <p className="text-xs text-gray-500">
-                PNG, JPG, GIF up to 10MB
-              </p>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Tags</label>
+              <input
+                type="text"
+                name="tags"
+                value={formData.tags}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                placeholder="Enter tags separated by commas"
+              />
             </div>
           </div>
-        </div>
 
-        <div className="flex justify-end space-x-4">
-          <button
-            type="button"
-            onClick={() => navigate('/admin/blogs')}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? 'Saving...' : 'Save Blog'}
-          </button>
-        </div>
-      </form>
+          <div className="flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={() => navigate('/admin/blogs')}
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              {loading ? 'Creating...' : 'Create Blog Post'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

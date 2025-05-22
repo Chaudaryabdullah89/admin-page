@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { ordersAPI, productsAPI, customersAPI } from '../utils/api';
+import { Link } from 'react-router-dom';
+import { dashboardAPI } from '../utils/api';
+import { toast } from 'react-toastify';
+import { FiUsers, FiShoppingBag, FiDollarSign, FiTrendingUp } from 'react-icons/fi';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({

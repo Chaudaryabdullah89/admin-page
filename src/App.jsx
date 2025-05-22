@@ -1,4 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { AuthProvider, useAuth } from './Context/AuthContext';
 import './App.css';
 
 // Admin Components
@@ -42,127 +45,144 @@ const AdminLayout = ({ children }) => {
   );
 };
 
-// Protected Route Component
-const ProtectedRoute = ({ children }) => {
-  const isAuthenticated = localStorage.getItem('adminToken'); // You should implement proper auth check
-  return isAuthenticated ? children : <Navigate to="/admin/login" />;
+const PrivateRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  return user ? children : <Navigate to="/admin/login" />;
 };
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/admin/login" element={<AdminLogin />} />
-        
-        {/* Protected Admin Routes */}
-        <Route path="/admin" element={
-          <ProtectedRoute>
-            <AdminLayout>
-              <AdminDashboard />
-            </AdminLayout>
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/admin/dashboard" element={
-          <ProtectedRoute>
-            <AdminLayout>
-              <AdminDashboard />
-            </AdminLayout>
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/admin/orders" element={
-          <ProtectedRoute>
-            <AdminLayout>
-              <AdminOrders />
-            </AdminLayout>
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/admin/orders/:orderId" element={
-          <ProtectedRoute>
-            <AdminLayout>
-              <OrderDetails />
-            </AdminLayout>
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/admin/products" element={
-          <ProtectedRoute>
-            <AdminLayout>
-              <AdminProducts />
-            </AdminLayout>
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/admin/add-product" element={
-          <ProtectedRoute>
-            <AdminLayout>
-              <AddProduct />
-            </AdminLayout>
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/admin/edit-product/:id" element={
-          <ProtectedRoute>
-            <AdminLayout>
-              <EditProduct />
-            </AdminLayout>
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/admin/customers" element={
-          <ProtectedRoute>
-            <AdminLayout>
-              <AdminCustomers />
-            </AdminLayout>
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/admin/blogs" element={
-          <ProtectedRoute>
-            <AdminLayout>
-              <AdminBlogs />
-            </AdminLayout>
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/admin/add-blog" element={
-          <ProtectedRoute>
-            <AdminLayout>
-              <AddBlog />
-            </AdminLayout>
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/admin/discounts" element={
-          <ProtectedRoute>
-            <AdminLayout>
-              <Discounts />
-            </AdminLayout>
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/admin/shipping-methods" element={
-          <ProtectedRoute>
-            <AdminLayout>
-              <ShippingMethods />
-            </AdminLayout>
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/admin/settings" element={
-          <ProtectedRoute>
-            <AdminLayout>
-              <AdminSettings />
-            </AdminLayout>
-          </ProtectedRoute>
-        } />
-        
-        {/* Redirect root to admin login */}
-        <Route path="/" element={<Navigate to="/admin/login" />} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <div className="min-h-screen bg-gray-100">
+          <Routes>
+            <Route path="/admin/login" element={<AdminLogin />} />
+            
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute>
+                  <AdminLayout>
+                    <AdminDashboard />
+                  </AdminLayout>
+                </PrivateRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/products"
+              element={
+                <PrivateRoute>
+                  <AdminLayout>
+                    <AdminProducts />
+                  </AdminLayout>
+                </PrivateRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/products/add"
+              element={
+                <PrivateRoute>
+                  <AdminLayout>
+                    <AddProduct />
+                  </AdminLayout>
+                </PrivateRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/orders"
+              element={
+                <PrivateRoute>
+                  <AdminLayout>
+                    <AdminOrders />
+                  </AdminLayout>
+                </PrivateRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/orders/:id"
+              element={
+                <PrivateRoute>
+                  <AdminLayout>
+                    <OrderDetails />
+                  </AdminLayout>
+                </PrivateRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/customers"
+              element={
+                <PrivateRoute>
+                  <AdminLayout>
+                    <AdminCustomers />
+                  </AdminLayout>
+                </PrivateRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/blogs"
+              element={
+                <PrivateRoute>
+                  <AdminLayout>
+                    <AdminBlogs />
+                  </AdminLayout>
+                </PrivateRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/blogs/add"
+              element={
+                <PrivateRoute>
+                  <AdminLayout>
+                    <AddBlog />
+                  </AdminLayout>
+                </PrivateRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/discounts"
+              element={
+                <PrivateRoute>
+                  <AdminLayout>
+                    <Discounts />
+                  </AdminLayout>
+                </PrivateRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/settings"
+              element={
+                <PrivateRoute>
+                  <AdminLayout>
+                    <AdminSettings />
+                  </AdminLayout>
+                </PrivateRoute>
+              }
+            />
+            
+            <Route path="/" element={<Navigate to="/admin" />} />
+          </Routes>
+        </div>
+        <ToastContainer position="top-right" autoClose={3000} />
+      </Router>
+    </AuthProvider>
   );
 }
 

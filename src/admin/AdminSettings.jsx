@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../Context/AuthContext';
-import AdminLayout from '../../Components/AdminLayout';
-import api from '../../utils/axios';
+import { useAuth } from '../Context/AuthContext';
+import { settingsAPI } from '../utils/api';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { FiSave, FiRefreshCw } from 'react-icons/fi';
 
 const AdminSettings = () => {
   const { user } = useAuth();
@@ -13,24 +13,22 @@ const AdminSettings = () => {
     siteName: '',
     siteDescription: '',
     contactEmail: '',
-    socialMedia: {
-      facebook: '',
-      twitter: '',
-      instagram: '',
-      linkedin: ''
+    contactPhone: '',
+    address: '',
+    facebook: '',
+    twitter: '',
+    instagram: '',
+    linkedin: '',
+    paymentMethods: {
+      cashOnDelivery: true,
+      creditCard: true,
+      paypal: true
     },
-    blogSettings: {
-      postsPerPage: 10,
-      allowComments: true,
-      requireApproval: true,
-      allowGuestComments: false
-    },
-    emailSettings: {
-      sendNotifications: true,
-      notifyOnNewComment: true,
-      notifyOnNewBlog: true
-    },
-    maintenanceMode: false
+    shippingMethods: {
+      standard: true,
+      express: true,
+      free: true
+    }
   });
 
   useEffect(() => {
@@ -40,26 +38,24 @@ const AdminSettings = () => {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/admin/settings');
+      const response = await settingsAPI.get();
       setSettings(response.data);
     } catch (error) {
-      console.error('Error fetching settings:', error);
-      toast.error('Failed to load settings');
+      toast.error('Failed to fetch settings');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
     if (name.includes('.')) {
-      const [section, field] = name.split('.');
+      const [parent, child] = name.split('.');
       setSettings(prev => ({
         ...prev,
-        [section]: {
-          ...prev[section],
-          [field]: type === 'checkbox' ? checked : value
+        [parent]: {
+          ...prev[parent],
+          [child]: type === 'checkbox' ? checked : value
         }
       }));
     } else {
@@ -74,10 +70,9 @@ const AdminSettings = () => {
     e.preventDefault();
     try {
       setSaving(true);
-      await api.put('/api/admin/settings', settings);
+      await settingsAPI.update(settings);
       toast.success('Settings updated successfully');
     } catch (error) {
-      console.error('Error updating settings:', error);
       toast.error('Failed to update settings');
     } finally {
       setSaving(false);
@@ -86,227 +81,217 @@ const AdminSettings = () => {
 
   if (loading) {
     return (
-      <AdminLayout>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        </div>
-      </AdminLayout>
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
     );
   }
 
   return (
-    <AdminLayout>
-      <div className="p-6">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6">Admin Settings</h1>
-          
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* General Settings */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">General Settings</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Site Name</label>
-                  <input
-                    type="text"
-                    name="siteName"
-                    value={settings.siteName}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Site Description</label>
-                  <textarea
-                    name="siteDescription"
-                    value={settings.siteDescription}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Contact Email</label>
-                  <input
-                    type="email"
-                    name="contactEmail"
-                    value={settings.contactEmail}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Social Media Settings */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Social Media</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Facebook</label>
-                  <input
-                    type="url"
-                    name="socialMedia.facebook"
-                    value={settings.socialMedia.facebook}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Twitter</label>
-                  <input
-                    type="url"
-                    name="socialMedia.twitter"
-                    value={settings.socialMedia.twitter}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Instagram</label>
-                  <input
-                    type="url"
-                    name="socialMedia.instagram"
-                    value={settings.socialMedia.instagram}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">LinkedIn</label>
-                  <input
-                    type="url"
-                    name="socialMedia.linkedin"
-                    value={settings.socialMedia.linkedin}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Blog Settings */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Blog Settings</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Posts Per Page</label>
-                  <input
-                    type="number"
-                    name="blogSettings.postsPerPage"
-                    value={settings.blogSettings.postsPerPage}
-                    onChange={handleInputChange}
-                    min="1"
-                    max="50"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="blogSettings.allowComments"
-                      checked={settings.blogSettings.allowComments}
-                      onChange={handleInputChange}
-                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Allow Comments</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="blogSettings.requireApproval"
-                      checked={settings.blogSettings.requireApproval}
-                      onChange={handleInputChange}
-                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Require Comment Approval</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="blogSettings.allowGuestComments"
-                      checked={settings.blogSettings.allowGuestComments}
-                      onChange={handleInputChange}
-                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Allow Guest Comments</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Email Settings */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Email Notifications</h2>
-              <div className="space-y-2">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="emailSettings.sendNotifications"
-                    checked={settings.emailSettings.sendNotifications}
-                    onChange={handleInputChange}
-                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">Enable Email Notifications</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="emailSettings.notifyOnNewComment"
-                    checked={settings.emailSettings.notifyOnNewComment}
-                    onChange={handleInputChange}
-                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">Notify on New Comments</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="emailSettings.notifyOnNewBlog"
-                    checked={settings.emailSettings.notifyOnNewBlog}
-                    onChange={handleInputChange}
-                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">Notify on New Blog Posts</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Maintenance Mode */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Maintenance Mode</h2>
-              <div className="space-y-4">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="maintenanceMode"
-                    checked={settings.maintenanceMode}
-                    onChange={handleInputChange}
-                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">Enable Maintenance Mode</span>
-                </label>
-                <p className="text-sm text-gray-500">
-                  When enabled, only administrators will be able to access the site.
-                </p>
-              </div>
-            </div>
-
-            {/* Save Button */}
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={saving}
-                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-              >
-                {saving ? 'Saving...' : 'Save Settings'}
-              </button>
-            </div>
-          </form>
-        </div>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold">Settings</h1>
       </div>
-    </AdminLayout>
+
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* General Settings */}
+          <div>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">General Settings</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Site Name</label>
+                <input
+                  type="text"
+                  name="siteName"
+                  value={settings.siteName}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Site Description</label>
+                <input
+                  type="text"
+                  name="siteDescription"
+                  value={settings.siteDescription}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Information */}
+          <div>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Contact Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Contact Email</label>
+                <input
+                  type="email"
+                  name="contactEmail"
+                  value={settings.contactEmail}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Contact Phone</label>
+                <input
+                  type="tel"
+                  name="contactPhone"
+                  value={settings.contactPhone}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Address</label>
+                <textarea
+                  name="address"
+                  value={settings.address}
+                  onChange={handleChange}
+                  rows="3"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Social Media */}
+          <div>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Social Media</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Facebook</label>
+                <input
+                  type="url"
+                  name="facebook"
+                  value={settings.facebook}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Twitter</label>
+                <input
+                  type="url"
+                  name="twitter"
+                  value={settings.twitter}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Instagram</label>
+                <input
+                  type="url"
+                  name="instagram"
+                  value={settings.instagram}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">LinkedIn</label>
+                <input
+                  type="url"
+                  name="linkedin"
+                  value={settings.linkedin}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Methods */}
+          <div>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Payment Methods</h2>
+            <div className="space-y-4">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="paymentMethods.cashOnDelivery"
+                  checked={settings.paymentMethods.cashOnDelivery}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-sm text-gray-900">Cash on Delivery</label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="paymentMethods.creditCard"
+                  checked={settings.paymentMethods.creditCard}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-sm text-gray-900">Credit Card</label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="paymentMethods.paypal"
+                  checked={settings.paymentMethods.paypal}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-sm text-gray-900">PayPal</label>
+              </div>
+            </div>
+          </div>
+
+          {/* Shipping Methods */}
+          <div>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Shipping Methods</h2>
+            <div className="space-y-4">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="shippingMethods.standard"
+                  checked={settings.shippingMethods.standard}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-sm text-gray-900">Standard Shipping</label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="shippingMethods.express"
+                  checked={settings.shippingMethods.express}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-sm text-gray-900">Express Shipping</label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="shippingMethods.free"
+                  checked={settings.shippingMethods.free}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-sm text-gray-900">Free Shipping</label>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={saving}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              {saving ? 'Saving...' : 'Save Settings'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };
 

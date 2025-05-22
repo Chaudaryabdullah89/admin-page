@@ -1,6 +1,7 @@
-import axios from 'axios';
+import axios from './axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://apna-backend.vercel.app/api';
+// const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -39,68 +40,79 @@ api.interceptors.response.use(
 
 // Auth API
 export const authAPI = {
-  login: (credentials) => api.post('/auth/admin/login', credentials),
-  logout: () => api.post('/auth/admin/logout'),
-  getProfile: () => api.get('/admin/settings'),
+  login: (email, password) => api.post('/auth/login', { email, password }),
+  getCurrentUser: () => api.get('/auth/me'),
+  logout: () => api.post('/auth/logout')
 };
 
 // Products API
 export const productsAPI = {
-  getAll: () => api.get('/admin/products'),
-  getOne: (id) => api.get(`/admin/products/${id}`),
-  create: (data) => api.post('/admin/products', data),
-  update: (id, data) => api.put(`/admin/products/${id}`, data),
-  delete: (id) => api.delete(`/admin/products/${id}`),
+  getAll: () => api.get('/products'),
+  getById: (id) => api.get(`/products/${id}`),
+  create: (data) => api.post('/products', data),
+  update: (id, data) => api.put(`/products/${id}`, data),
+  delete: (id) => api.delete(`/products/${id}`),
+  updateStatus: (id, status) => api.patch(`/products/${id}/status`, { status })
 };
 
 // Orders API
 export const ordersAPI = {
-  getAll: () => api.get('/admin/orders'),
-  getOne: (id) => api.get(`/admin/orders/${id}`),
-  update: (id, data) => api.put(`/admin/orders/${id}`, data),
-  delete: (id) => api.delete(`/admin/orders/${id}`),
+  getAll: () => api.get('/orders'),
+  getById: (id) => api.get(`/orders/${id}`),
+  updateStatus: (id, status) => api.patch(`/orders/${id}/status`, { status }),
+  delete: (id) => api.delete(`/orders/${id}`)
 };
 
 // Customers API
 export const customersAPI = {
-  getAll: () => api.get('/admin/customers'),
-  getOne: (id) => api.get(`/admin/customers/${id}`),
-  update: (id, data) => api.put(`/admin/customers/${id}`, data),
-  delete: (id) => api.delete(`/admin/customers/${id}`),
-};
-
-// Settings API
-export const settingsAPI = {
-  get: () => api.get('/admin/settings'),
-  update: (data) => api.put('/admin/settings', data),
-  updateProfile: (data) => api.put('/admin/settings/profile', data),
-  updateStore: (data) => api.put('/admin/settings/store', data),
-  updateSecurity: (data) => api.put('/admin/settings/security', data),
+  getAll: () => api.get('/customers'),
+  getById: (id) => api.get(`/customers/${id}`),
+  update: (id, data) => api.put(`/customers/${id}`, data),
+  delete: (id) => api.delete(`/customers/${id}`),
+  updateStatus: (id, status) => api.patch(`/customers/${id}/status`, { status })
 };
 
 // Blogs API
 export const blogsAPI = {
-  getAll: () => api.get('/admin/blogs'),
-  getOne: (id) => api.get(`/admin/blogs/${id}`),
-  create: (data) => api.post('/admin/blogs', data),
-  update: (id, data) => api.put(`/admin/blogs/${id}`, data),
-  delete: (id) => api.delete(`/admin/blogs/${id}`),
+  getAll: () => api.get('/blogs'),
+  getById: (id) => api.get(`/blogs/${id}`),
+  create: (data) => api.post('/blogs', data),
+  update: (id, data) => api.put(`/blogs/${id}`, data),
+  delete: (id) => api.delete(`/blogs/${id}`),
+  updateStatus: (id, status) => api.patch(`/blogs/${id}/status`, { status })
 };
 
 // Discounts API
 export const discountsAPI = {
-  getAll: () => api.get('/admin/discounts'),
-  create: (data) => api.post('/admin/discounts', data),
-  update: (id, data) => api.put(`/admin/discounts/${id}`, data),
-  delete: (id) => api.delete(`/admin/discounts/${id}`),
+  getAll: () => api.get('/discounts'),
+  getById: (id) => api.get(`/discounts/${id}`),
+  create: (data) => api.post('/discounts', data),
+  update: (id, data) => api.put(`/discounts/${id}`, data),
+  delete: (id) => api.delete(`/discounts/${id}`),
+  updateStatus: (id, status) => api.patch(`/discounts/${id}/status`, { status })
+};
+
+// Settings API
+export const settingsAPI = {
+  get: () => api.get('/settings'),
+  update: (data) => api.put('/settings', data)
+};
+
+// Dashboard API
+export const dashboardAPI = {
+  getStats: () => api.get('/dashboard/stats'),
+  getRecentOrders: () => api.get('/dashboard/recent-orders'),
+  getLowStockProducts: () => api.get('/dashboard/low-stock-products')
 };
 
 // Shipping Methods API
 export const shippingAPI = {
-  getAll: () => api.get('/admin/shipping-methods'),
-  create: (data) => api.post('/admin/shipping-methods', data),
-  update: (id, data) => api.put(`/admin/shipping-methods/${id}`, data),
-  delete: (id) => api.delete(`/admin/shipping-methods/${id}`),
+  getAll: () => api.get('/shipping-methods'),
+  getById: (id) => api.get(`/shipping-methods/${id}`),
+  create: (data) => api.post('/shipping-methods', data),
+  update: (id, data) => api.put(`/shipping-methods/${id}`, data),
+  delete: (id) => api.delete(`/shipping-methods/${id}`),
+  updateStatus: (id, status) => api.patch(`/shipping-methods/${id}/status`, { status })
 };
 
 export default api; 

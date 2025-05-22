@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import AdminLayout from '../../Components/AdminLayout';
-import api from '../../utils/axios';
+import { productsAPI } from '../utils/api';
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
 import { 
   FiPlus, FiSearch, FiEdit2, FiTrash2, FiFilter, FiGrid, FiList,
   FiPackage, FiDollarSign, FiTrendingUp, FiAlertCircle, FiStar,
-  FiRefreshCw, FiDownload, FiBarChart2
+  FiRefreshCw, FiDownload, FiBarChart2, FiEye, FiCheck, FiX
 } from 'react-icons/fi';
 
 const AdminProducts = () => {
@@ -33,7 +32,7 @@ const AdminProducts = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await api.get('/api/products');
+      const response = await productsAPI.get('/api/products');
       const productsData = response.data;
       setProducts(productsData);
       
@@ -76,7 +75,7 @@ const AdminProducts = () => {
   const handleDelete = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await api.delete(`/api/products/${productId}`);
+        await productsAPI.delete(`/api/products/${productId}`);
         toast.success('Product deleted successfully');
         fetchProducts();
       } catch (error) {
